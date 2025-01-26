@@ -17,20 +17,20 @@ class 繁體方言搜索:
 
         self.表名 = 查询.查找表名(序号)
 
-    def 返回調值(self,字头):
+    def 返回調值(self, 字头):
         return list({item[0] for item in 查询.单列查询(self.表名, "調值", "字", 字头)})
 
-    def 返回調類(self,字头):
+    def 返回調類(self, 字头):
         return list({item[0] for item in 查询.单列查询(self.表名, "調類", "字", 字头)})
 
-    def 返回發音(self,字头):
+    def 返回發音(self, 字头):
         return [a + b for a, b in zip(list({item[0] for item in 查询.单列查询(self.表名, "聲母", "字", 字头)}),
                                       list({item[0] for item in 查询.单列查询(self.表名, "韻母", "字", 字头)}))]
 
-    def 返回聲母(self,字头):
+    def 返回聲母(self, 字头):
         return list({item[0] for item in 查询.单列查询(self.表名, "聲母", "字", 字头)})
 
-    def 返回韻母(self,字头):
+    def 返回韻母(self, 字头):
         return list({item[0] for item in 查询.单列查询(self.表名, "韻母", "字", 字头)})
 
     def 返回(self,类别,字头):
