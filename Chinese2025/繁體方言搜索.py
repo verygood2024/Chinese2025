@@ -1,7 +1,7 @@
 import sys
 import warnings
 
-from 单列查询 import 查询
+from .查询 import 查询
 
 
 class 繁體方言搜索:
