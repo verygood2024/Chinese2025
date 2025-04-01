@@ -1,38 +1,46 @@
-from pprint import pprint
+import pprint
 import re
 import warnings
 import sys
 
-from Error import 输入不合法
+from .Error import 输入不合法
 from .繁體擬音搜索 import 繁體擬音搜索
 from .繁體廣韻搜索 import 繁體廣韻搜索
 from .繁體平水韻搜索 import 繁體平水韻搜索
 
 
-class WordProcessor:
-    def __init__(self, words):
+class TextProcessor:
+    def __init__(self, words, punctuation, polyphonic_words, missing_words):
         self.words = words
+        self.punctuation = punctuation  # 传入的标点符号列表
+        self.polyphonic_words = {pos for _, pos in polyphonic_words}  # 多音字位置集合
+        self.missing_words = {pos for _, pos in missing_words}  # 没有字位置集合
         self.result = []
 
     def process(self):
         temp = []  # 临时列表，用来存储每段处理的数据
         count = 0  # 记录括号外字的数量
+        punct_idx = 0  # 标点符号索引
 
-        for word in self.words:
-            # 判断是否有 "-"，如果有，拆分并加括号
-            if '-' in word:
+        for idx, word in enumerate(self.words):
+            # 判断是否是多音字或没有字
+            if idx in self.polyphonic_words:
+                word = f"{word}(多音字)"
+            elif idx in self.missing_words:
+                word = f"{word}(没有字)"
+            elif '-' in word:  # 处理 "-" 连接的字
                 base, suffix = word.split('-', 1)
-                temp.append(f"{base}({suffix})")
-                count += 1  # 增加一个括号外的字
-            else:
-                temp.append(word)
-                count += 1  # 增加一个括号外的字
+                word = f"{base}({suffix})"
 
-            # 每五个括号外字添加逗号，每十个括号外字添加句号并换行
-            if count % 5 == 0 and (count % 10 != 0):  # 每五个字加逗号，排除十个字的情况
-                temp.append('，')
-            if count % 10 == 0:  # 每十个字加句号并换行
-                temp.append('。')
+            temp.append(word)
+            count += 1  # 增加一个括号外的字
+
+            # 每五个括号外字添加标点符号，每十个括号外字换行
+            if count % 5 == 0:
+                temp.append(self.punctuation[punct_idx % len(self.punctuation)])  # 取标点
+                punct_idx += 1  # 标点符号索引加1
+
+            if count % 10 == 0:  # 每十个字加换行
                 self.result.append(' '.join(temp))  # 句号后换行
                 temp = []  # 清空临时列表
                 count = 0  # 重置计数器
@@ -41,8 +49,13 @@ class WordProcessor:
         if temp:
             self.result.append(' '.join(temp))
 
+        print(self.result)
+
     def get_result(self):
         return '\n'.join(self.result)
+
+    def text_box(self,ui):
+        ui.insert("end", f"{self.get_result()}")
 
 时代字典 = {
     "魏晉":"魏晉",
@@ -56,25 +69,25 @@ class WordProcessor:
 }
 
 列字典 = {
-    "拼音":"tupa_js",
-    "白一平":"baxter_js",
-    "高汉本": "karlgren_js",
-    "高本漢":"karlgren_js",
-    "潘悟云": "panwuyun_js",
-    "潘悟雲":"panwuyun_js",
+    #"拼音":"tupa_js",
+    #"白一平":"baxter_js",
+    #"高汉本": "karlgren_js",
+    #"高本漢":"karlgren_js",
+    #"潘悟云": "panwuyun_js",
+    #"潘悟雲":"panwuyun_js",
     "王力汉语语音史魏晋":"wangli魏晋南北朝_js",
-    "王力汉语语音史隋唐": "wangli隋唐_js",
-    "王力汉语史稿":"wangli汉语史稿_js",
+    #"王力汉语语音史隋唐": "wangli隋唐_js",
+    #"王力汉语史稿":"wangli汉语史稿_js",
     "王力漢語語音史魏晉":"wangli魏晋南北朝_js",
-    "王力漢語語音史隋唐": "wangli隋唐_js",
-    "王力漢語史稿":"wangli汉语史稿_js",
-    "0":"tupa_js",
-    "1":"baxter_js",
-    "2":"karlgren_js",
-    "3":"panwuyun_js",
+    #"王力漢語語音史隋唐": "wangli隋唐_js",
+    #"王力漢語史稿":"wangli汉语史稿_js",
+    #"0":"tupa_js",
+    #"1":"baxter_js",
+    #"2":"karlgren_js",
+    #"3":"panwuyun_js",
     "4":"wangli魏晋南北朝_js",
-    "5": "wangli隋唐_js",
-    "6":"wangli汉语史稿_js",
+    #"5": "wangli隋唐_js",
+    #"6":"wangli汉语史稿_js",
 }
 
 韵字典 = {
@@ -193,14 +206,14 @@ m韵尾 = {
 }
 
 小韵字典 = {
-    "字韵部不同":"字韻部不同",
-    "字韻部不同":"字韻部不同",
-    "上下字韵部不同":"上下字韻部不同",
-    "上下字韻部不同":"上下字韻部不同",
+    "韵部不同-全联":"韻部不同-全聯",
+    "韻部不同-全聯":"韻部不同-全聯",
+    "韵部不同-半联":"韻部不同-半聯",
+    "韻部不同-半聯":"韻部不同-半聯",
     "上四下一非同韵部":"上四下一非同韻部",
     "上四下一非同韻部":"上四下一非同韻部",
     "0":"字韻部不同",
-    "1":"上下字韻部不同",
+    "1":"韻部不同-半聯",
     "2":"上四下一非同韻部",
 }
 
@@ -225,6 +238,13 @@ m韵尾 = {
     "6":"韻母檢查-全聯"
 }
 
+正纽字典 = {
+    "半联":"半聯",
+    "半聯":"半聯",
+    "全联":"全聯",
+    "全聯":"全聯"
+}
+
 聲母字典 = {
     '幫': 'p',  '滂': 'pʰ',  '並': 'bʱ',  '明': 'm',
     '端': 't',  '透': 'tʰ',  '定': 'dʱ',  '泥': 'n',             '來': 'l',
@@ -236,19 +256,25 @@ m韵尾 = {
     '影': 'ʔ',}
 
 class YongMingTi:
-    def __init__(self, text: str, 时代="魏晉", 源="王力汉语语音史魏晋", 韵="王力汉语语音史魏晋", 声调="平上去入",蜂腰="二四同浊",鹤膝="二四同清",小韵="上下字韵部不同",旁纽="主元音韵尾检查-半联"):
+    def __init__(self, text: str, 韵="王力汉语语音史魏晋", 声调="平仄",蜂腰="二四同浊",鹤膝="二四同清",小韵="韵部不同-全联",旁纽="主元音韵尾检查-全联",正纽="全联"):
         if not re.fullmatch(r'^[\u4E00-\u9FFF\u3400-\u4DBF\U00020000-\U0002A6DF\U0002A700-\U0002B73F\U0002B740-\U0002B81F\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\n\r]+$', text):
             raise 输入不合法(text,"字符串不合法.并不允许中文与标点符号除外的字符.")
-        
+
+        '''
+        时代="魏晋"
         时代_str = str(时代)
         if 时代_str not in 时代字典:
             raise 输入不合法(时代_str,pprint.pformat(sorted(时代字典),compact=True))
         self.时代 = 时代字典[时代_str]
+        '''
 
+        '''
+        源="王力汉语语音史魏晋"
         源_str = str(源)
         if 源_str not in 列字典:
             raise 输入不合法(源_str,pprint.pformat(sorted(列字典),compact=True))
         self.源 = 列字典[源_str]
+        '''
 
         韵_str = str(韵)
         if 韵_str not in 韵字典:
@@ -280,8 +306,37 @@ class YongMingTi:
             raise 输入不合法(旁纽_str,pprint.pformat(sorted(旁纽字典),compact=True))
         self.旁纽 = 旁纽字典[旁纽_str]
 
+        正纽_str = str(正纽)
+        if 正纽_str not in 正纽字典:
+            raise 输入不合法(正纽_str, pprint.pformat(sorted(正纽字典), compact=True))
+        self.正纽 = 正纽字典[正纽_str]
+
         self.get_all = '\n'.join(line.strip() for line in text.splitlines())
 
+    def list_detection(self, sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list,基础标点符号列表:list,ui=None):
+        if not (len(sheng_diao_list) == len(qing_zhuo_list) == len(yun_list) == len(main_vowel_rhyme_tail_list) == len(shengmu_yuanyin_yunwei_list) == (5*len(基础标点符号列表))):
+            raise 输入不合法([sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list,基础标点符号列表], "输入的列表,除了标点符号列表以外都应该相等.标点符号列表:其它列表每五个字就应当有一个标点符号在列表里.")
+        a = self.__sickness_detect(sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list)
+        if ui is None:
+            e = TextProcessor(a,基础标点符号列表,[],[])
+            e.process()
+            return e.get_result()
+        else:
+            e = TextProcessor(a, 基础标点符号列表, [], [])
+            e.process()
+            e.text_box(ui)
+
+    def detection(self,ui=None):
+        if ui is None:
+            a,b,c,d = self.__fetch()
+            e = TextProcessor(a,d,b,c)
+            e.process()
+            return e.get_result()
+        else:
+            a, b, c, d = self.__fetch()
+            e = TextProcessor(a, d, b, c)
+            e.process()
+            e.text_box(ui)
 
     @staticmethod
     def __remove_chars(text, chars_to_remove):
@@ -292,14 +347,11 @@ class YongMingTi:
         pattern = f"[{re.escape(chars_to_remove)}]"
         return re.sub(pattern, '', text)
 
-    def fetch(self):
-        print("开始检查-请用繁体")
+    def __fetch(self):
         hanzi_regex = r"[\u4E00-\u9FFF\u3400-\u4DBF\U00020000-\U0002A6DF\U0002A700-\U0002B73F\U0002B740-\U0002B81F]"
-        get_all_list = re.findall(hanzi_regex, self.get_all, flags=re.UNICODE)
-        #print(get_all_list)
-        #print(len(get_all_list))
+        self.get_all_list = re.findall(hanzi_regex, self.get_all, flags=re.UNICODE)
 
-        if len(get_all_list)<20:
+        if len(self.get_all_list)<20:
             sys.exit(warnings.warn(f"至少输入二句（二十个字）.", SyntaxWarning))
 
         基础标点符号列表 = re.findall(r'[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b]', self.get_all, flags=re.UNICODE)
@@ -312,7 +364,10 @@ class YongMingTi:
         多音字 = []
         没有字 = []
 
-        for i,word in enumerate(get_all_list):
+        if len(基础标点符号列表) * 5 != len(self.get_all_list):
+            raise 输入不合法(self.get_all, "标点符号数量错误.")
+
+        for i,word in enumerate(self.get_all_list):
             result = 繁體擬音搜索().返回擬音(word)[word]
             result_len = len(result)
             if result_len > 1:#多音字
@@ -336,7 +391,7 @@ class YongMingTi:
                 擬音 = result[0][0]
                 reconstructions_list.append(擬音)
                 '''清濁'''
-                qing_zhuo_list.append(繁體廣韻搜索().返回清濁(word)[0])
+                qing_zhuo_list.append(繁體廣韻搜索("小學堂").返回清濁(word)[0])
 
                 '''韻部'''
                 if self.韵 == "王力漢語語音史魏晉":
@@ -365,8 +420,6 @@ class YongMingTi:
                     if last_char in yun_mapping:
                         韵F = yun_mapping[last_char].get(second_last_char, None)
                         yun_list.append(韵F)
-                    print(i,":",word,":",韵F)
-                    #print(word)
                 elif self.韵 == "廣韻":
                     韵F = 繁體廣韻搜索().返回韻部(word)[0]
                     yun_list.append(韵F)
@@ -396,19 +449,21 @@ class YongMingTi:
                 正纽 = 輔音 + str(韵F or "")
                 shengmu_yuanyin_yunwei_list.append(正纽)
 
-        return self.__sickness_detect(sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list, get_all_list)
+        return self.__sickness_detect(sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list),多音字,没有字,基础标点符号列表
 
-    def __sickness_detect(self, sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list, get_all_list):
+    def __sickness_detect(self, sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list):
         """
         :param shengmu_yuanyin_yunwei_list: 聲母與主元音與韻尾列表
         :param main_vowel_rhyme_tail_list: 主元音與韻尾列表或韻母列表
         :param yun_list: 韻部列表
         :param qing_zhuo_list: 清濁列表
         :param sheng_diao_list: 聲調列表
-        :param get_all_list: 字符列表
+        :param self.get_all_list: 字符列表
         :return:
         """
-        print(len(yun_list))
+        get_all_list = self.get_all_list
+
+
         '''押韻'''
 
         tenth_elements = [yun_list[i] for i in range(9, len(sheng_diao_list), 10)]
@@ -418,14 +473,14 @@ class YongMingTi:
         '''平頭'''
 
         if sheng_diao_list[0] == sheng_diao_list[5] and sheng_diao_list[0] is not None:
-            _0 = get_all_list[0]
-            _5 = get_all_list[5]
+            _0 = self.get_all_list[0]
+            _5 = self.get_all_list[5]
             get_all_list[0] = f"{_0}-平頭"
             get_all_list[5] = f"{_5}-平頭"
 
         if sheng_diao_list[1] == sheng_diao_list[6] and sheng_diao_list[1] is not None:
-            _1 = get_all_list[1]
-            _6 = get_all_list[6]
+            _1 = self.get_all_list[1]
+            _6 = self.get_all_list[6]
             get_all_list[1] = f"{_1}-平頭"
             get_all_list[6] = f"{_6}-平頭"
         '''上尾'''
@@ -496,14 +551,12 @@ class YongMingTi:
 
         '''小韻'''
 
-        if self.小韵 == "字韻部不同":
-            get_all_list = self.__xiao_yun_compare_and_update(yun_list, get_all_list)
-        elif self.小韵 == "上下字韻部不同":
+        if self.小韵 == "韻部不同-全聯":
             start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(yun_list)
             start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(yun_list, 5)
-            pprint(start_with_0_extract_5_skip_5)
-            pprint(start_with_5_extract_5_skip_5)
-            get_all_list = self.__rhyme_or_feng_yao(get_all_list, start_with_0_extract_5_skip_5, start_with_5_extract_5_skip_5, xiao_yun=True, sickness="小韻")
+            get_all_list = self.__旁纽预处理(start_with_0_extract_5_skip_5, start_with_5_extract_5_skip_5, get_all_list,sickness="小韻")
+        elif self.小韵 == "韻部不同-半聯":
+            get_all_list = self.__xiao_yun_compare_and_update(yun_list, get_all_list)
         else:#上四下一非同韻部
             # 提取每十个元素的第四个元素，并保留索引
             fourth_elements_yun = [(yun_list[i], i) for i in range(3, len(yun_list), 10)]
@@ -516,29 +569,20 @@ class YongMingTi:
 
         '''旁紐'''
 
-        if self.旁纽 == "韻母檢查-全聯":
-            start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(yun_list)
-            start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(yun_list, 5)
-            pprint(start_with_0_extract_5_skip_5)
-            pprint(start_with_5_extract_5_skip_5)
-            get_all_list = self.__rhyme_or_feng_yao(get_all_list, start_with_0_extract_5_skip_5,
-                                                    start_with_5_extract_5_skip_5, xiao_yun=True, sickness="旁紐")
-        elif self.旁纽 == "韻母檢查-半聯":
-            get_all_list = self.__xiao_yun_compare_and_update(yun_list, get_all_list, '旁紐', 5)
-        elif self.旁纽 == "主元音韻尾檢查-半聯" or "韻部檢查-半聯":
+        if self.旁纽 == "韻母檢查-全聯" or "主元音韻尾檢查-全聯" or "韻部檢查-全聯":
+            start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(main_vowel_rhyme_tail_list)#上联
+            start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(main_vowel_rhyme_tail_list, 5)#下联
+            get_all_list = self.__旁纽预处理(start_with_0_extract_5_skip_5,start_with_5_extract_5_skip_5,get_all_list, sickness="旁紐")
+        elif self.旁纽 == "韻母檢查-半聯" or "主元音韻尾檢查-半聯" or "韻部檢查-半聯":
             get_all_list = self.__xiao_yun_compare_and_update(main_vowel_rhyme_tail_list, get_all_list, '旁紐', 5)
-        elif self.旁纽 == "主元音韻尾檢查-全聯" or "韻部檢查-全聯":
-            start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(main_vowel_rhyme_tail_list)
-            start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(main_vowel_rhyme_tail_list, 5)
-            get_all_list = self.__rhyme_or_feng_yao(get_all_list, start_with_0_extract_5_skip_5,
-                                                    start_with_5_extract_5_skip_5, xiao_yun=True, sickness="旁紐")
 
         '''正紐'''
-        start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(shengmu_yuanyin_yunwei_list)
-        start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(shengmu_yuanyin_yunwei_list, 5)
-
-        get_all_list = self.__rhyme_or_feng_yao(get_all_list, [item for sublist in start_with_0_extract_5_skip_5 for item in sublist],
-                                                [item for sublist in start_with_5_extract_5_skip_5 for item in sublist], xiao_yun=True, sickness="正紐")
+        if self.正纽 == "半聯":
+            get_all_list = self.__xiao_yun_compare_and_update(shengmu_yuanyin_yunwei_list, get_all_list, '正紐', 5)
+        else:
+            start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(shengmu_yuanyin_yunwei_list)  # 上联
+            start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(shengmu_yuanyin_yunwei_list, 5)  # 下联
+            get_all_list = self.__旁纽预处理(start_with_0_extract_5_skip_5, start_with_5_extract_5_skip_5, get_all_list,sickness="正紐")
 
         return get_all_list
 
@@ -555,8 +599,7 @@ class YongMingTi:
         return get_all_list
 
     @staticmethod#F
-    def __rhyme_or_feng_yao(get_all_list, elements_0, elements_1, qing_zhuo=False, rhyme=False, xiao_yun=False,
-                            qing_zhuo_word="濁", sickness="蜂腰"):
+    def __rhyme_or_feng_yao(get_all_list, elements_0, elements_1, qing_zhuo=False, rhyme=False, xiao_yun=False,qing_zhuo_word="濁", sickness="蜂腰"):
         for i in range(min(len(elements_0), len(elements_1))):
             first_value, first_index = elements_0[i]
             fourth_value, fourth_index = elements_1[i]
@@ -689,5 +732,64 @@ class YongMingTi:
                     for idx in [0, 1, 3, 4]:
                         get_all_list[group[idx][1]] += f"-{sickness}{qing_zhuo_dict[qing_zhuo_word]}"
                     get_all_list[group[2][1]] += f"-{sickness}{qing_zhuo_word}"
+
+        return get_all_list
+
+    @staticmethod#F
+    def __旁纽(upper_line, lower_line, get_all_list, sickness="旁紐"):
+        """
+        上下联全字交叉对比方法
+        :param upper_line: 上联数据 [(属性值, 原索引), ...] 如 [("見",0), ("溪",1),...]
+        :param lower_line: 下联数据 [(属性值, 原索引), ...]
+        :param get_all_list: 结果标记列表 ["字1","字2",...]
+        :param sickness: 病犯类型标记
+        :return: 更新后的标记列表
+        """
+        for upper_item in upper_line:
+            upper_val, upper_idx = upper_item
+            if upper_val is None:
+                continue
+
+            for lower_item in lower_line:
+                lower_val, lower_idx = lower_item
+                if lower_val is None:
+                    continue
+
+                condition_met = False
+
+                condition_met = (upper_val == lower_val)  # 字面完全相同
+
+                if condition_met:
+                    # 避免重复添加标记
+                    mark = f"-{sickness}"
+                    if mark not in get_all_list[upper_idx]:
+                        get_all_list[upper_idx] += mark
+                    if mark not in get_all_list[lower_idx]:
+                        get_all_list[lower_idx] += mark
+
+        return get_all_list
+
+    @staticmethod
+    def __旁纽预处理(upper_all, lower_all, get_all_list, sickness="旁紐"):
+        """
+        多层嵌套上下联全量对比方法
+        :param upper_all: 上联数据总表，结构如 [[(韵母,idx),...], ...]
+        :param lower_all: 下联数据总表，结构同上
+        :param get_all_list: 结果标记列表
+        :param 其他参数同 cross_compare_all_pairs
+        :return: 更新后的标记列表
+        """
+        # 确保上下联分组数一致
+        assert len(upper_all) == len(lower_all), "上下联结构不对称"
+
+        # 逐对处理每组上下联
+        for upper_line, lower_line in zip(upper_all, lower_all):
+            # 调用单对比较方法
+            get_all_list = YongMingTi.__旁纽(
+                upper_line=upper_line,
+                lower_line=lower_line,
+                get_all_list=get_all_list,
+                sickness=sickness
+            )
 
         return get_all_list
