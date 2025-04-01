@@ -16,7 +16,7 @@ class 查询:
             if not 返回值:
                 cursor.close()
                 conn.close()
-                return [None]
+                return []
 
             cursor.close()
             conn.close()
@@ -26,7 +26,7 @@ class 查询:
             sys.exit()
 
     @staticmethod
-    def 多列查询(需要查询的表名, 以此列查询, 输入内容, pretty=False):
+    def 多列查询(需要查询的表名, 以此列查询, 输入内容):
         try:
             conn = sqlite3.connect(
                 os.path.join(os.path.dirname(os.path.abspath(__file__)), "reconstructions_list.sqlite"),
@@ -55,11 +55,7 @@ class 查询:
                     "数据": 数据列表
                 }
 
-            # 如果需要格式化输出，则返回格式化后的 JSON 字符串
-            if pretty:
-                return json.dumps(result, ensure_ascii=False, indent=4)
-            else:
-                return result
+            return result
         except Exception as e:
             warnings.warn(f"数据库连接失败: {e}", SyntaxWarning)
             sys.exit()

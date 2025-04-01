@@ -1,7 +1,8 @@
 import sys
 import warnings
 
-from 查询 import 查询
+from .查询 import 查询
+from .Error import 输入不合法
 
 广韵表名字典 = {
     "小學堂":"_020_广韵_小学堂",
@@ -18,8 +19,7 @@ from 查询 import 查询
 class 繁體廣韻搜索:
     def __init__(self,来源="poem"):
         if 来源 not in ["小學堂","poem","nk2028"]:
-            warnings.warn(f"没有此来源", SyntaxWarning)
-            sys.exit()
+            raise 输入不合法(来源,["小學堂","poem","nk2028"])
         self.表名 = 来源
 
     def 返回韻部(self,字头):
@@ -120,8 +120,8 @@ class 繁體廣韻搜索:
             warnings.warn("此表不支持該功能,以自動轉換成支持該功能的表.", UserWarning)
         return list({item[0] for item in 查询.单列查询("_020_广韵_小学堂", "清濁", "字", 字头)})
 
-    def 返回表字典(self,字头,pretty=False):
-        return 查询.多列查询(广韵表名字典[self.表名],广韵字头列字典[self.表名],字头,pretty)
+    def 返回表字典(self,字头):
+        return 查询.多列查询(广韵表名字典[self.表名],广韵字头列字典[self.表名],字头)
 
     def 返回音韻地位(self,字头):
         if self.表名 in ["小學堂","poem"]:
@@ -140,7 +140,7 @@ class 繁體廣韻搜索:
             self.表名 = "poem"
         return list({item[0] for item in 查询.单列查询(广韵表名字典[self.表名], "釋義補充", 广韵字头列字典[self.表名], 字头)})
 
-    def 返回(self, 类别, 字头,pretty=True):
+    def 返回(self, 类别, 字头):
         match 类别:
             case "韻部":
                 return self.返回韻部(字头)
@@ -167,7 +167,7 @@ class 繁體廣韻搜索:
             case "音韻地位":
                 return self.返回音韻地位(字头)
             case "表字典":
-                return self.返回表字典(字头,pretty)
+                return self.返回表字典(字头)
             case "釋義":
                 return self.返回釋義(字头)
             case "補充釋義":

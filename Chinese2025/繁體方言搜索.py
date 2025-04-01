@@ -1,19 +1,28 @@
 import sys
 import warnings
 
+from .Error import 输入不合法
 from .查询 import 查询
 
 
 class 繁體方言搜索:
     def __init__(self,序号):
-        try:
-            code_int = int(序号)
-            if code_int < 27:
-                warnings.warn(f"您不能输入小于027的数字", SyntaxWarning)
-                sys.exit()
-        except ValueError:
-            warnings.warn(f"您要输入数字，例如：027", SyntaxWarning)
-            sys.exit()
+        # 检查输入是否为字符串类型
+        if not isinstance(序号, str):
+            raise 输入不合法(序号, 提示="输入类型应为字符串形式的数字,例如'027'或'284'.")
+
+        # 检查字符串是否全为数字
+        if not 序号.isdigit():
+            raise 输入不合法(序号, 提示="输入必须是全数字的字符串,例如'027'或'284'.")
+
+        # 新增规则：四位数及以上不允许前导零,三位数允许前导零
+        if len(序号) != 3 and 序号.startswith("0"):
+            raise 输入不合法(序号, 提示="三位数允许前导零（如'027'）,但四位数及以上需直接输入数字如'284'.")
+
+        # 转换为整数并验证范围
+        code_int = int(序号)
+        if not (27 <= code_int <= 434):
+            raise 输入不合法(序号,提示="您不能输入区间[27,434]以外字符串数字.")
 
         self.表名 = 查询.查找表名(序号)
 
