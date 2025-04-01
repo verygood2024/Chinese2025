@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Chinese2025"
-version = "0.0.5"
+version = "1.0.0"
 description = "一个关于中文的集合库，支持繁體廣韻搜索、繁體方言搜索、常見擬音搜索。"
 readme = "README.md"
 requires-python = ">=3.6, <4"

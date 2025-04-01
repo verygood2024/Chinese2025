@@ -1,3 +1,4 @@
+import copy
 import pprint
 import re
 import warnings
@@ -212,37 +213,45 @@ m韵尾 = {
     "韻部不同-半聯":"韻部不同-半聯",
     "上四下一非同韵部":"上四下一非同韻部",
     "上四下一非同韻部":"上四下一非同韻部",
-    "0":"字韻部不同",
+    "0":"韻部不同-全聯",
     "1":"韻部不同-半聯",
     "2":"上四下一非同韻部",
 }
 
 旁纽字典 = {
-    "韵部检查-半联":"韻部檢查-半聯",
-    "韻部檢查-半聯":"韻部檢查-半聯",
-    "主元音韵尾检查-半联":"主元音韻尾檢查-半聯",
-    "主元音韻尾檢查-半聯":"主元音韻尾檢查-半聯",
     "韵母检查-半联":"韻母檢查-半聯",
     "韻母檢查-半聯":"韻母檢查-半聯",
-    "韵部检查-全联":"韻部檢查-全聯",
-    "韻部檢查-全聯":"韻部檢查-全聯",
-    "主元音韵尾检查-全联":"主元音韻尾檢查-全聯",
-    "主元音韻尾檢查-全聯":"主元音韻尾檢查-全聯",
     "韵母检查-全联":"韻母檢查-全聯",
     "韻母檢查-全聯":"韻母檢查-全聯",
+    "叠韵检查-半联":"韻部檢查-半聯",
+    "叠韻檢查-半聯":"韻部檢查-半聯",
+    "叠韵检查-全联":"韻部檢查-全聯",
+    "叠韻檢查-全聯":"韻部檢查-全聯",
+    "雙聲檢查-半聯":"雙聲檢查-半聯",
+    "双声检查-半联":"雙聲檢查-半聯",
+    "雙聲檢查-全聯":"雙聲檢查-全聯",
+    "双声检查-全联":"雙聲檢查-全聯",
+    "雙聲叠韻檢查-半聯":"雙聲叠韻檢查-半聯",
+    "双声叠韵检查-半联":"雙聲叠韻檢查-半聯",
+    "雙聲叠韻檢查-全聯":"雙聲叠韻檢查-全聯",
+    "双声叠韵检查-全联":"雙聲叠韻檢查-全聯",
     "0":"韻部檢查-半聯",
-    "1":"主元音韻尾檢查-半聯",
+    "1":"雙聲檢查-半聯",
     "3":"韻母檢查-半聯",
-    "4":"韻部檢查-全聯",
-    "5":"主元音韻尾檢查-全聯",
-    "6":"韻母檢查-全聯"
+    "4":"雙聲叠韻檢查-半聯",
+    "5":"韻部檢查-全聯",
+    "6":"雙聲檢查-全聯",
+    "7":"韻母檢查-全聯",
+    "8":"雙聲叠韻檢查-全聯"
 }
 
 正纽字典 = {
     "半联":"半聯",
     "半聯":"半聯",
     "全联":"全聯",
-    "全聯":"全聯"
+    "全聯":"全聯",
+    "0":"半聯",
+    "1":"全聯"
 }
 
 聲母字典 = {
@@ -256,7 +265,7 @@ m韵尾 = {
     '影': 'ʔ',}
 
 class YongMingTi:
-    def __init__(self, text: str, 韵="王力汉语语音史魏晋", 声调="平仄",蜂腰="二四同浊",鹤膝="二四同清",小韵="韵部不同-全联",旁纽="主元音韵尾检查-全联",正纽="全联"):
+    def __init__(self, text: str, 韵="王力汉语语音史魏晋", 声调="平仄",蜂腰="二四同浊",鹤膝="二四同清",小韵="上四下一非同韵部",旁纽="双声叠韵检查-半联",正纽="全联"):
         if not re.fullmatch(r'^[\u4E00-\u9FFF\u3400-\u4DBF\U00020000-\U0002A6DF\U0002A700-\U0002B73F\U0002B740-\U0002B81F\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\n\r]+$', text):
             raise 输入不合法(text,"字符串不合法.并不允许中文与标点符号除外的字符.")
 
@@ -313,10 +322,10 @@ class YongMingTi:
 
         self.get_all = '\n'.join(line.strip() for line in text.splitlines())
 
-    def list_detection(self, sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list,基础标点符号列表:list,ui=None):
+    def list_detection(self, sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list,双声列表, shengmu_yuanyin_yunwei_list,基础标点符号列表:list,ui=None):
         if not (len(sheng_diao_list) == len(qing_zhuo_list) == len(yun_list) == len(main_vowel_rhyme_tail_list) == len(shengmu_yuanyin_yunwei_list) == (5*len(基础标点符号列表))):
             raise 输入不合法([sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list,基础标点符号列表], "输入的列表,除了标点符号列表以外都应该相等.标点符号列表:其它列表每五个字就应当有一个标点符号在列表里.")
-        a = self.__sickness_detect(sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list)
+        a = self.__sickness_detect(sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list,双声列表, shengmu_yuanyin_yunwei_list)
         if ui is None:
             e = TextProcessor(a,基础标点符号列表,[],[])
             e.process()
@@ -361,6 +370,7 @@ class YongMingTi:
         yun_list = []
         main_vowel_rhyme_tail_list = []
         shengmu_yuanyin_yunwei_list = []
+        双声列表 = []
         多音字 = []
         没有字 = []
 
@@ -438,10 +448,15 @@ class YongMingTi:
                 輔音 = 聲母字典[result[0][4][0]]
                 韻母 = YongMingTi.__remove_chars(擬音, 輔音)
 
-                if self.旁纽 == "韻母檢查-半聯" or "韻母檢查-全聯":
+                if self.旁纽 in ["韻母檢查-半聯", "韻母檢查-全聯"]:
                     main_vowel_rhyme_tail_list.append(韻母)
+                elif self.旁纽 in ["雙聲檢查-半聯", "雙聲檢查-全聯"]:
+                    main_vowel_rhyme_tail_list.append(輔音)
+                elif self.旁纽 in ["雙聲叠韻檢查-半聯", "雙聲叠韻檢查-全聯"]:
+                    main_vowel_rhyme_tail_list = copy.deepcopy(yun_list)
+                    双声列表.append(輔音)
                 else:
-                    main_vowel_rhyme_tail_list = yun_list
+                    main_vowel_rhyme_tail_list = copy.deepcopy(yun_list)
 
                 '''正纽'''
 
@@ -449,9 +464,9 @@ class YongMingTi:
                 正纽 = 輔音 + str(韵F or "")
                 shengmu_yuanyin_yunwei_list.append(正纽)
 
-        return self.__sickness_detect(sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list),多音字,没有字,基础标点符号列表
+        return self.__sickness_detect(sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list,双声列表, shengmu_yuanyin_yunwei_list),多音字,没有字,基础标点符号列表
 
-    def __sickness_detect(self, sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list, shengmu_yuanyin_yunwei_list):
+    def __sickness_detect(self, sheng_diao_list, qing_zhuo_list, yun_list, main_vowel_rhyme_tail_list,双声列表, shengmu_yuanyin_yunwei_list):
         """
         :param shengmu_yuanyin_yunwei_list: 聲母與主元音與韻尾列表
         :param main_vowel_rhyme_tail_list: 主元音與韻尾列表或韻母列表
@@ -569,12 +584,21 @@ class YongMingTi:
 
         '''旁紐'''
 
-        if self.旁纽 == "韻母檢查-全聯" or "主元音韻尾檢查-全聯" or "韻部檢查-全聯":
+        if self.旁纽 in ["韻母檢查-全聯" , "叠韻檢查-全聯", "雙聲檢查-全聯","雙聲叠韻檢查-全聯"]:
             start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(main_vowel_rhyme_tail_list)#上联
             start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(main_vowel_rhyme_tail_list, 5)#下联
             get_all_list = self.__旁纽预处理(start_with_0_extract_5_skip_5,start_with_5_extract_5_skip_5,get_all_list, sickness="旁紐")
-        elif self.旁纽 == "韻母檢查-半聯" or "主元音韻尾檢查-半聯" or "韻部檢查-半聯":
+            if self.旁纽 == "雙聲叠韻檢查-全聯":
+                start_with_0_extract_5_skip_5 = self.__extract_5_skip_5(双声列表)
+                start_with_5_extract_5_skip_5 = self.__extract_5_skip_5(双声列表, 5)
+                get_all_list = self.__旁纽预处理(start_with_0_extract_5_skip_5, start_with_5_extract_5_skip_5,get_all_list,sickness="旁紐")
+        elif self.旁纽 in ["韻母檢查-半聯" , "叠韻檢查-半聯", "雙聲檢查-半聯","雙聲叠韻檢查-半聯"]:
             get_all_list = self.__xiao_yun_compare_and_update(main_vowel_rhyme_tail_list, get_all_list, '旁紐', 5)
+            if self.旁纽 == "雙聲叠韻檢查-半聯":
+                get_all_list = self.__xiao_yun_compare_and_update(双声列表, get_all_list, '旁紐', 5)
+
+
+
 
         '''正紐'''
         if self.正纽 == "半聯":
