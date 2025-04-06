@@ -272,26 +272,6 @@ SI_XIANG_WU_XING = {
     "土":5
 }
 
-import re
-from tkinter import messagebox
-import random
-import re
-from tkinter import messagebox
-
-import ttkbootstrap as ttk
-
-from function.DownBoxModify import DownBoxModify
-from function.ProjectFunctions import window_init, window_closes
-from function.XiaoLiuRenNum import XiaoLiuRenNum
-from function.time.SolarTimeCalculator import SolarTimeCalculator
-from function.variables.ProjectPathVariables import XLR_JSON, XLR_DATA_WU_XING_JI_LU_PATH, XLR_WU_XING_JI_LU_JSON, \
-    XLR_WU_XING_JSON
-from function.variables.ProjectDictionaryVariables import SI_XIANG_WU_XING, HOU_TIAN_WU_XING, DI_ZHI_DICT, ZHI_DICT_NUM, \
-    ZAO_WAN_DI_ZHI_DICT, WAN_ZAO_DI_ZHI_DICT
-from module.XiaoLiuRenDate import Calendar
-from window_module.set_window.RandomNumbersWindow import RandomNumbersWindow
-
-
 class NewX:
     def __init__(self):
         self.result = None
