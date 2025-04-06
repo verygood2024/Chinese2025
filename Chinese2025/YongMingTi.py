@@ -19,6 +19,7 @@ class TextProcessor:
         self.result = []
 
     def process(self):
+        #print(self.words)
         temp = []  # 临时列表，用来存储每段处理的数据
         count = 0  # 记录括号外字的数量
         punct_idx = 0  # 标点符号索引
@@ -50,7 +51,7 @@ class TextProcessor:
         if temp:
             self.result.append(' '.join(temp))
 
-        print(self.result)
+        #print(self.result)
 
     def get_result(self):
         return '\n'.join(self.result)
@@ -237,12 +238,12 @@ m韵尾 = {
     "双声叠韵检查-全联":"雙聲叠韻檢查-全聯",
     "0":"韻部檢查-半聯",
     "1":"雙聲檢查-半聯",
-    "3":"韻母檢查-半聯",
-    "4":"雙聲叠韻檢查-半聯",
-    "5":"韻部檢查-全聯",
-    "6":"雙聲檢查-全聯",
-    "7":"韻母檢查-全聯",
-    "8":"雙聲叠韻檢查-全聯"
+    "2":"韻母檢查-半聯",
+    "3":"雙聲叠韻檢查-半聯",
+    "4":"韻部檢查-全聯",
+    "5":"雙聲檢查-全聯",
+    "6":"韻母檢查-全聯",
+    "7":"雙聲叠韻檢查-全聯"
 }
 
 正纽字典 = {
@@ -387,6 +388,7 @@ class YongMingTi:
                 sheng_diao_list.append(None)
                 main_vowel_rhyme_tail_list.append(None)
                 shengmu_yuanyin_yunwei_list.append(None)
+                双声列表.append(None)
                 多音字.append([word,i])
             elif result_len == 0:#没有此字
                 reconstructions_list.append(None)
@@ -395,6 +397,7 @@ class YongMingTi:
                 sheng_diao_list.append(None)
                 main_vowel_rhyme_tail_list.append(None)
                 shengmu_yuanyin_yunwei_list.append(None)
+                双声列表.append(None)
                 没有字.append([word, i])
             else:
                 '''擬音'''

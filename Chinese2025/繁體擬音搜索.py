@@ -3,7 +3,7 @@ import sys
 import warnings
 import re
 
-from Error import 输入不合法
+from .Error import 输入不合法
 from .查询 import 查询
 from .繁體廣韻搜索 import 繁體廣韻搜索
 
