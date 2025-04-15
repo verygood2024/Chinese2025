@@ -4,6 +4,7 @@ import re
 import warnings
 import sys
 
+from .Unicode import extract_chinese_characters, extract_punctuation,valid_text
 from .Error import 输入不合法
 from .繁體擬音搜索 import 繁體擬音搜索
 from .繁體廣韻搜索 import 繁體廣韻搜索
@@ -43,15 +44,13 @@ class TextProcessor:
                 punct_idx += 1  # 标点符号索引加1
 
             if count % 10 == 0:  # 每十个字加换行
-                self.result.append(' '.join(temp))  # 句号后换行
+                self.result.append(''.join(temp))  # 句号后换行
                 temp = []  # 清空临时列表
                 count = 0  # 重置计数器
 
         # 处理剩余部分
         if temp:
-            self.result.append(' '.join(temp))
-
-        #print(self.result)
+            self.result.append(''.join(temp))
 
     def get_result(self):
         return '\n'.join(self.result)
@@ -267,7 +266,7 @@ m韵尾 = {
 
 class YongMingTi:
     def __init__(self, text: str, 韵="王力汉语语音史魏晋", 声调="平仄",蜂腰="二四同浊",鹤膝="二四同清",小韵="上四下一非同韵部",旁纽="双声叠韵检查-半联",正纽="全联"):
-        if not re.fullmatch(r'^[\u4E00-\u9FFF\u3400-\u4DBF\U00020000-\U0002A6DF\U0002A700-\U0002B73F\U0002B740-\U0002B81F\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\n\r]+$', text):
+        if not valid_text(text):
             raise 输入不合法(text,"字符串不合法.并不允许中文与标点符号除外的字符.")
 
         '''
@@ -358,13 +357,12 @@ class YongMingTi:
         return re.sub(pattern, '', text)
 
     def __fetch(self):
-        hanzi_regex = r"[\u4E00-\u9FFF\u3400-\u4DBF\U00020000-\U0002A6DF\U0002A700-\U0002B73F\U0002B740-\U0002B81F]"
-        self.get_all_list = re.findall(hanzi_regex, self.get_all, flags=re.UNICODE)
+        self.get_all_list = extract_chinese_characters(self.get_all)
 
         if len(self.get_all_list)<20:
             sys.exit(warnings.warn(f"至少输入二句（二十个字）.", SyntaxWarning))
 
-        基础标点符号列表 = re.findall(r'[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b]', self.get_all, flags=re.UNICODE)
+        基础标点符号列表 = extract_punctuation(self.get_all)
         qing_zhuo_list = []
         sheng_diao_list = []
         reconstructions_list = []
@@ -404,7 +402,7 @@ class YongMingTi:
                 擬音 = result[0][0]
                 reconstructions_list.append(擬音)
                 '''清濁'''
-                qing_zhuo_list.append(繁體廣韻搜索("小學堂").返回清濁(word)[0])
+                qing_zhuo_list.append(繁體廣韻搜索().返回清濁(word)[0])
 
                 '''韻部'''
                 if self.韵 == "王力漢語語音史魏晉":
@@ -434,10 +432,10 @@ class YongMingTi:
                         韵F = yun_mapping[last_char].get(second_last_char, None)
                         yun_list.append(韵F)
                 elif self.韵 == "廣韻":
-                    韵F = 繁體廣韻搜索().返回韻部(word)[0]
+                    韵F = 繁體廣韻搜索().返回韻目(word)[0]
                     yun_list.append(韵F)
                 elif self.韵 == "平水韻":
-                    韵F = 繁體平水韻搜索().返回韻部(word)[0]
+                    韵F = 繁體平水韻搜索().返回韻目(word)[0]
                     yun_list.append(韵F)
 
                 '''聲調'''
@@ -636,18 +634,18 @@ class YongMingTi:
 
             if qing_zhuo:  # 清濁匹配
                 if first_value == qing_zhuo_word and fourth_value == qing_zhuo_word:
-                    print(f"匹配: {first_value} 和 {fourth_value}")
+                    #print(f"匹配: {first_value} 和 {fourth_value}")
                     get_all_list[first_index] = f"{get_all_list[first_index]}-{sickness}"
                     get_all_list[fourth_index] = f"{get_all_list[fourth_index]}-{sickness}"
             else:  # 聲調匹配或押韻匹配
                 if rhyme:
                     if first_value != fourth_value:
-                        print(f"不匹配: {first_value} 和 {fourth_value}")
+                        #print(f"不匹配: {first_value} 和 {fourth_value}")
                         get_all_list[first_index] = f"{get_all_list[first_index]}-{sickness}"
                         get_all_list[fourth_index] = f"{get_all_list[fourth_index]}-{sickness}"
                 else:
                     if first_value == fourth_value:
-                        print(f"匹配: {first_value} 和 {fourth_value}")
+                        #print(f"匹配: {first_value} 和 {fourth_value}")
                         if xiao_yun:
                             get_all_list[first_index] = f"{get_all_list[first_index]}-{first_value}{sickness}"
                             get_all_list[fourth_index] = f"{get_all_list[fourth_index]}-{fourth_value}{sickness}"

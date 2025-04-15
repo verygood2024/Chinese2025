@@ -43,17 +43,17 @@ class 繁體方言搜索:
         return list({item[0] for item in 查询.单列查询(self.表名, "韻母", "字", 字头)})
 
     def 返回(self,类别,字头):
-        match 类别:
-            case "調值":
-                return self.返回調值(字头)
-            case "調類":
-                return self.返回調類(字头)
-            case "發音":
-                return self.返回發音(字头)
-            case "聲母":
-                return self.返回聲母(字头)
-            case "韻母":
-                return self.返回韻母(字头)
-            case _:
-                warnings.warn(f"没有此类别", SyntaxWarning)
-                sys.exit()
+        func_map = {
+            "調值": lambda: self.返回調值(字头),
+            "調類": lambda: self.返回調類(字头),
+            "發音": lambda: self.返回發音(字头),
+            "聲母": lambda: self.返回聲母(字头),
+            "韻母": lambda: self.返回韻母(字头),
+        }
+
+        func = func_map.get(类别)
+        if func:
+            return func()
+        else:
+            warnings.warn("没有此类别", SyntaxWarning)
+            sys.exit()

@@ -3,6 +3,7 @@ from .繁體廣韻搜索 import 繁體廣韻搜索
 class FanGuangYun(繁體廣韻搜索):
     方法映射 = {
     "yun_bu": "返回韻部",
+    "yun_mu": "返回韻目",
     "sheng_niu": "返回聲紐", 
     "sheng_diao": "返回聲調",
     "ping_ze": "返回平仄",
@@ -16,7 +17,8 @@ class FanGuangYun(繁體廣韻搜索):
     "yin_yun":"音韻地位",
     "zi_dian":"返回表字典",
     "shi_yi":"釋義",
-    "bu_chong_shi_yi":"補充釋義"
+    "bu_chong_shi_yi":"補充釋義",
+    "quan_ci_qing_zhuo":"返回全次清濁"
     }
 
 

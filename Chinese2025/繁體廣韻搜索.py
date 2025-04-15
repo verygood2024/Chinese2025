@@ -16,19 +16,38 @@ from .Error import 输入不合法
     "nk2028":"字頭"
 }
 
+聲母對類別 = {
+    "幫": "全清", "滂": "次清", "並": "全濁", "明": "次濁",
+    "端": "全清", "透": "次清", "定": "全濁", "泥": "次濁",
+    "來": "次濁", "知": "全清", "徹": "次清", "澄": "全濁", "娘": "次濁",
+    "精": "全清", "清": "次清", "從": "全濁", "心": "全清", "邪": "全濁",
+    "莊": "全清", "初": "次清", "崇": "全濁", "生": "全清", "俟": "全濁",
+    "章": "全清", "昌": "次清", "常": "全濁", "書": "全清", "船": "全濁", "日": "次濁",
+    "以": "次濁", "見": "全清", "溪": "次清", "群": "全濁", "疑": "次濁",
+    "影": "全清", "曉": "全清", "匣": "全濁", "云": "次濁"
+}
+
+
 class 繁體廣韻搜索:
     def __init__(self,来源="poem"):
         if 来源 not in ["小學堂","poem","nk2028"]:
             raise 输入不合法(来源,["小學堂","poem","nk2028"])
         self.表名 = 来源
 
-    def 返回韻部(self,字头):
+    def 返回韻目(self, 字头):
         广韵列名字典 = {
             "poem": "韻部_調整後",
             "小學堂": "韻目",
             "nk2028":"韻目原貌"
         }
         return list({item[0] for item in 查询.单列查询(广韵表名字典[self.表名],广韵列名字典[self.表名],广韵字头列字典[self.表名],字头)})
+
+    def 返回韻部(self,字头):
+        if self.表名 in ["nk2028", "小學堂"]:
+            warnings.warn("此表不支持該功能,以自動轉換成支持該功能的表。", UserWarning)
+            self.表名 = "poem"
+
+        return list({item[0][-2:] for item in 查询.单列查询(广韵表名字典[self.表名], "廣韻韻部順序", 广韵字头列字典[self.表名], 字头)})
 
     def 返回聲紐(self,字头):
         广韵列名字典 = {
@@ -116,9 +135,22 @@ class 繁體廣韻搜索:
         return list({item[0] for item in 查询.单列查询(广韵表名字典[self.表名], "攝", 广韵字头列字典[self.表名], 字头)})
 
     def 返回清濁(self,字头):
-        if self.表名 in ["nk2028","poem"]:
+        if self.表名 == "nk2028":
             warnings.warn("此表不支持該功能,以自動轉換成支持該功能的表.", UserWarning)
-        return list({item[0] for item in 查询.单列查询("_020_广韵_小学堂", "清濁", "字", 字头)})
+            self.表名 = "poem"
+        if self.表名 == "poem":
+            return [聲母對類別[聲紐][1] for 聲紐 in self.返回聲紐(字头)]
+        else:
+            return list({item[0][1] for item in 查询.单列查询("_020_广韵_小学堂", "清濁", "字", 字头)})
+
+    def 返回全次清濁(self,字头):
+        if self.表名 == "nk2028":
+            warnings.warn("此表不支持該功能,以自動轉換成支持該功能的表.", UserWarning)
+            self.表名 = "poem"
+        if self.表名 == "poem":
+            return [聲母對類別[聲紐] for 聲紐 in self.返回聲紐(字头)]
+        else:
+            return list({item[0] for item in 查询.单列查询("_020_广韵_小学堂", "清濁", "字", 字头)})
 
     def 返回表字典(self,字头):
         return 查询.多列查询(广韵表名字典[self.表名],广韵字头列字典[self.表名],字头)
@@ -141,37 +173,29 @@ class 繁體廣韻搜索:
         return list({item[0] for item in 查询.单列查询(广韵表名字典[self.表名], "釋義補充", 广韵字头列字典[self.表名], 字头)})
 
     def 返回(self, 类别, 字头):
-        match 类别:
-            case "韻部":
-                return self.返回韻部(字头)
-            case "聲紐":
-                return self.返回聲紐(字头)
-            case "聲調":
-                return self.返回聲調(字头)
-            case "平仄":
-                return self.返回平仄(字头)
-            case "反切":
-                return self.返回反切(字头)
-            case "反切上字":
-                return self.返回反切上字(字头)
-            case "反切下字":
-                return self.返回反切下字(字头)
-            case "開合":
-                return self.返回開合(字头)
-            case "等第":
-                return self.返回等第(字头)
-            case "反切攝":
-                return self.返回攝(字头)
-            case "清濁":
-                return self.返回清濁(字头)
-            case "音韻地位":
-                return self.返回音韻地位(字头)
-            case "表字典":
-                return self.返回表字典(字头)
-            case "釋義":
-                return self.返回釋義(字头)
-            case "補充釋義":
-                return self.返回補充釋義(字头)
-            case _:
-                warnings.warn(f"没有此类别", SyntaxWarning)
-                sys.exit()
+        func_map = {
+            "韻部": lambda:self.返回韻部(字头),
+            "韵目": lambda:self.返回韻目(字头),
+            "聲紐": lambda:self.返回聲紐(字头),
+            "聲調": lambda:self.返回聲調(字头),
+            "平仄": lambda:self.返回平仄(字头),
+            "反切": lambda:self.返回反切(字头),
+            "反切上字": lambda:self.返回反切上字(字头),
+            "反切下字": lambda:self.返回反切下字(字头),
+            "開合":lambda: self.返回開合(字头),
+            "等第": lambda:self.返回等第(字头),
+            "反切攝": lambda:self.返回攝(字头),
+            "清濁": lambda:self.返回清濁(字头),
+            "全次清濁": lambda:self.返回全次清濁,
+            "音韻地位": lambda:self.返回音韻地位(字头),
+            "表字典": lambda:self.返回表字典(字头),
+            "釋義": lambda:self.返回釋義(字头),
+            "補充釋義": lambda:self.返回補充釋義(字头)
+        }
+
+        func = func_map.get(类别)
+        if func:
+            return func()
+        else:
+            warnings.warn("没有此类别", SyntaxWarning)
+            sys.exit()
