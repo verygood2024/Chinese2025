@@ -175,7 +175,7 @@ class 繁體廣韻搜索:
     def 返回(self, 类别, 字头):
         func_map = {
             "韻部": lambda:self.返回韻部(字头),
-            "韵目": lambda:self.返回韻目(字头),
+            "韻目": lambda:self.返回韻目(字头),
             "聲紐": lambda:self.返回聲紐(字头),
             "聲調": lambda:self.返回聲調(字头),
             "平仄": lambda:self.返回平仄(字头),

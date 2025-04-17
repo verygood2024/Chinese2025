@@ -1,6 +1,6 @@
-from .YongMingTi import YongMingTi
+from .FanYongMingTi import FanYongMingTi
 
-class 繁體永明躰檢測(YongMingTi):
+class 繁體永明躰檢測(FanYongMingTi):
     方法映射 = {
         "檢測":"detection",
         "已有檢測":"list_detection"

@@ -264,8 +264,9 @@ m韵尾 = {
     '見': 'k',  '溪': 'kʰ',  '羣': 'ɡʱ',  '疑': 'ŋ', '曉': 'x', '匣': 'ɣ', '云': 'ɣ',
     '影': 'ʔ',}
 
-class YongMingTi:
-    def __init__(self, text: str, 韵="王力汉语语音史魏晋", 声调="平仄",蜂腰="二四同浊",鹤膝="二四同清",小韵="上四下一非同韵部",旁纽="双声叠韵检查-半联",正纽="全联"):
+class FanYongMingTi:
+
+    def __init__(self, text: str, 韵:str|int="王力汉语语音史魏晋", 声调:str|int="平仄",蜂腰:str|int="二四同浊",鹤膝:str|int="二四同清",小韵:str|int="上四下一非同韵部",旁纽:str|int="双声叠韵检查-半联",正纽:str|int="全联"):
         if not valid_text(text):
             raise 输入不合法(text,"字符串不合法.并不允许中文与标点符号除外的字符.")
 
@@ -447,7 +448,7 @@ class YongMingTi:
                 '''旁纽'''
 
                 輔音 = 聲母字典[result[0][4][0]]
-                韻母 = YongMingTi.__remove_chars(擬音, 輔音)
+                韻母 = FanYongMingTi.__remove_chars(擬音, 輔音)
 
                 if self.旁纽 in ["韻母檢查-半聯", "韻母檢查-全聯"]:
                     main_vowel_rhyme_tail_list.append(韻母)
@@ -701,11 +702,11 @@ class YongMingTi:
     def __xiao_yun_compare_and_update(yun_list, get_all_list, sickness="小韻", _1towhat_=10):
         # 提取并分组
         if _1towhat_ == 10:
-            grouped_yun = YongMingTi.__1to10_(yun_list)
+            grouped_yun = FanYongMingTi.__1to10_(yun_list)
         elif _1towhat_ == 5:
-            grouped_yun = YongMingTi.__1to5_(yun_list)
+            grouped_yun = FanYongMingTi.__1to5_(yun_list)
         else:
-            grouped_yun = YongMingTi.__1to10_(yun_list)
+            grouped_yun = FanYongMingTi.__1to10_(yun_list)
 
         for group in grouped_yun:
             element_indices = {}
@@ -731,7 +732,7 @@ class YongMingTi:
 
     @staticmethod#F
     def __feng_yao_compare_and_update(qing_zhuo_list, get_all_list, qing_zhuo_word="濁", sickness="蜂腰"):
-        grouped_sheng_diao = YongMingTi.__1to5_(qing_zhuo_list)
+        grouped_sheng_diao = FanYongMingTi.__1to5_(qing_zhuo_list)
         qing_zhuo_dict = {"清": "濁", "濁": "清"}
 
         for group_idx, group in enumerate(grouped_sheng_diao):
@@ -810,7 +811,7 @@ class YongMingTi:
         # 逐对处理每组上下联
         for upper_line, lower_line in zip(upper_all, lower_all):
             # 调用单对比较方法
-            get_all_list = YongMingTi.__旁纽(
+            get_all_list = FanYongMingTi.__旁纽(
                 upper_line=upper_line,
                 lower_line=lower_line,
                 get_all_list=get_all_list,

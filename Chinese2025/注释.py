@@ -1,7 +1,7 @@
 import pprint
 import re
 
-from .Unicode import valid_text, extract_chinese_characters
+from .Unicode import valid_text, extract_chinese_characters, is_chinese
 from .Error import 输入不合法
 from .繁體廣韻搜索 import 繁體廣韻搜索
 from .繁體平水韻搜索 import 繁體平水韻搜索
@@ -19,8 +19,8 @@ from .现代韵书搜索 import 现代韵书搜索
     "2":"現代韻書"
 }
 
-class 注诗:
-    def __init__(self,text: str,韵="平水韻",多音字=True,自动分词=True,连音变调=False,轻声=False,间隔:str="，"):
+class 注释:
+    def __init__(self,text: str,韵:str|int="平水韻",多音字=True,自动分词=True,连音变调=False,轻声=False, 特殊声母="特殊声母", 转换符:str= "-i", 转换前符:str= "i",间隔:str="，"):
         self.yun_list = []
         self.韵书字典 = None
         self.pattern = re.compile(
@@ -49,6 +49,9 @@ class 注诗:
         self.连音变调 = 连音变调
         self.间隔 = 间隔
         self.轻声 = 轻声
+        self.特殊声母 = 特殊声母
+        self.转换符 = 转换符
+        self.转换前符 = 转换前符
 
     def __获取(self, last_chars, 韵书字典, 类别="韻部"):
         if self.韵 in ["廣韻","平水韻"]:
@@ -57,6 +60,7 @@ class 注诗:
                     result = 繁體廣韻搜索().返回(类别,word)
                 elif self.韵 == "平水韻":
                     result = 繁體平水韻搜索().返回(类别,word)
+                    #print(result)
                 else:
                     result = 繁體平水韻搜索().返回(类别,word)
                 if len(result) == 0:
@@ -65,7 +69,7 @@ class 注诗:
                     self.yun_list.append(result)
         else:
             for 韵部 in 现代韵书搜索(韵书字典=韵书字典, 多音字=self.多音字, 自动分词=self.自动分词,
-                                   连音变调=self.连音变调,轻声=self.轻声).返回(类别,self.text):
+                                     连音变调=self.连音变调, 轻声=self.轻声, 特殊声母=self.特殊声母, 转换符=self.转换符, 转换前符=self.转换前符).返回(类别,self.text):
                 #print(韵部)
                 if 韵部 is None:
                     self.yun_list.append(None)
@@ -76,29 +80,26 @@ class 注诗:
 
     def __逐字标注(self,yun_list: list) -> str:
         lines = self.text.splitlines()
-        annotated_text = ""
+        index = 0
+        result_lines = ""
 
-        for line, yun_line in zip(lines, yun_list):
-            if not line.strip():
-                annotated_text += "\n"
+        for line in lines:
+            if not line.strip():  # 检查是否是空行，空行会被跳过
                 continue
-            hanzi_matches = self.pattern.findall(line)
             new_line = ""
-            for hanzi, yun in zip(hanzi_matches, yun_line):
-                if isinstance(yun, list):
-                    yun_text = f"{self.间隔}".join(str(y) for y in yun)
-                elif yun is not None:
-                    yun_text = str(yun)
+            for ch in line:
+                if is_chinese(ch):
+                    current_phonetics = yun_list[index]
+                    phonetic_str = ",".join(str(p) if p is not None else "None" for p in current_phonetics)
+                    new_line += f"{ch}({phonetic_str})"
+                    index += 1
                 else:
-                    yun_text = "None"
-                new_line += f"{hanzi}({yun_text})"
-            annotated_text += new_line + "\n"
+                    # 非汉字（如标点、空白）原样添加
+                    new_line += ch
+            result_lines += new_line + "\n"
+        return result_lines
 
-        self.yun_list = []
-
-        return annotated_text.strip()
-
-    def 古体(self,韵书字典:dict|str="中华通韵"):
+    def __判断韵书字典(self,韵书字典):
         if self.韵 == "現代韻書":
             if isinstance(韵书字典, dict):
                 if len(韵书字典) != 36:
@@ -111,23 +112,33 @@ class 注诗:
             else:
                 raise 输入不合法(韵书字典, pprint.pformat(sorted(["中华通韵", "中華通韻", "0", 0] + ["中华新韵", "中華新韻", "1", 1]), compact=True))
 
-        last_chars = extract_chinese_characters(self.text)
+    def 古体(self, 韵书字典: dict | str = "中华通韵"):
+        self.__判断韵书字典(韵书字典)
 
+        last_chars = extract_chinese_characters(self.text)
         self.__获取(last_chars, 韵书字典)
 
         annotated_text = ""
-
-        lines = self.text.splitlines()
-        #print(self.yun_list)
-        for line, yun in zip(lines, self.yun_list):
+        index = 0  # 当前遍历到第几个汉字
+        for line in self.text.splitlines():
             if not line.strip():
                 continue
+
             hanzi_matches = self.pattern.findall(line)
             if not hanzi_matches:
                 annotated_text += line + "\n"
                 continue
+
             last_hanzi = hanzi_matches[-1]
-            #print("yun",yun)
+
+            # 找到当前行最后一个汉字在全文中的索引
+            for i, ch in enumerate(hanzi_matches):
+                if is_chinese(ch):
+                    index += 1
+            hanzi_global_index = index - 1  # 最后一个汉字的全局索引
+
+            # 取出对应韵部
+            yun = self.yun_list[hanzi_global_index]
             if isinstance(yun, list):
                 yun_text = f"{self.间隔}".join(str(y) for y in yun)
             elif yun is not None:
@@ -136,21 +147,30 @@ class 注诗:
                 yun_text = "None"
 
             annotated = f"{last_hanzi}({yun_text})"
-
             idx = line.rfind(last_hanzi)
             new_line = line[:idx] + annotated + line[idx + 1:]
             annotated_text += new_line + "\n"
 
         annotated_text = annotated_text.strip()
-
         self.yun_list = []
 
         return annotated_text
 
-    def 韵部(self):
+    def 韵部(self,韵书字典:dict|str="中华通韵"):
+        self.__判断韵书字典(韵书字典)
+
         last_chars = extract_chinese_characters(self.text)
 
-        self.__获取(last_chars, None, "韻部")
+        self.__获取(last_chars, 韵书字典, "韻部")
+
+        return self.__逐字标注(self.yun_list)
+
+    def 韵目(self,韵书字典:dict|str="中华通韵"):
+        self.__判断韵书字典(韵书字典)
+
+        last_chars = extract_chinese_characters(self.text)
+
+        self.__获取(last_chars, 韵书字典, "韻目")
 
         return self.__逐字标注(self.yun_list)
 
